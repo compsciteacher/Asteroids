@@ -1,19 +1,21 @@
 import pygame
 import sys
 import random
-
+stars=pygame.image.load("bg.png")
 background = (0, 0, 0)
 entity_color = (255, 255, 255,255)
 listAsteroid=[]
 listLaser=[]
 creationTime=100
 all_sprites_list = pygame.sprite.Group()
+lives=3
+dead=False
 
 class Entity(pygame.sprite.Sprite):
     """Inherited by any object in the game."""
 
     def __init__(self, x, y, width, height):
-        pygame.sprite.Sprite.__init__(self,all_sprites_list)
+        pygame.sprite.Sprite.__init__(self)
 
         self.x = x
         self.y = y
@@ -36,7 +38,7 @@ class Ship(Entity):
 
         self.image = pygame.Surface([self.width, self.height])
 
-        ship = pygame.image.load('SpaceShip.png')
+        ship = pygame.image.load('SpaceShip1.png')
         self.image.blit(ship, (0, 0))
 
 
@@ -79,35 +81,7 @@ class Player(Ship):
         elif self.rect.y > window_height - self.height:
             self.rect.y = window_height - self.height
 
-'''
-class Enemy(Ship):
-    """
-    AI controlled Ship, simply moves towards the Asteroid
-    and nothing else.
-    """
 
-    def __init__(self, x, y, width, height):
-        super(Enemy, self).__init__(x, y, width, height)
-
-        self.x_change = 4
-
-    def update(self):
-        """
-        Moves the Ship while ensuring it stays in bounds
-        """
-        # Moves the Ship up if the Asteroid is above,
-        # and down if below.
-        if Asteroid.rect.y < self.rect.y:
-            self.rect.x -= self.x_change
-        elif Asteroid.rect.x > self.rect.x:
-            self.rect.x += self.x_change
-
-        # The Ship can never go above the window since it follows
-        # the Asteroid, but this keeps it from going under.
-        if self.rect.x + self.height > window_height:
-            self.rect.x = window_height - self.height
-
-'''
 class Asteroid(Entity):
     """
     The Asteroid!  Moves around the screen.
@@ -136,34 +110,54 @@ class Asteroid(Entity):
         # elif self.rect.y > window_height - 20:
         #     self.y_direction *= -1
 
+def checkAsteroid(all):
+    for i in all:
+        if i.rect.x<=0:
+            i.remove(all_sprites_list)
+            all.remove(i)
+
+def checkKill(all):
+    global lives
+    for i in all:
+        if i.rect.colliderect(player.rect):
+            all.remove(i)
+            killed=True
+            print('dead')
+            lives-=1
+            print(lives)
+
+
+
+
 
 pygame.init()
 
 window_width = 700
 window_height = 400
 screen = pygame.display.set_mode((window_width, window_height))
-
+screen.blit(stars,(0,0))
 pygame.display.set_caption("Asteroids")
 
 clock = pygame.time.Clock()
 
-Asteroid = Asteroid(window_width / 2, random.randint(10,window_height-10), 20, 20)
-listAsteroid.append(Asteroid)
+one = Asteroid(window_width, random.randint(10,window_height-10), 20, 20)
+listAsteroid.append(one)
 player = Player(20, window_height / 2, 40, 37)
 #y = Enemy(window_width - 40, window_height / 2, 64, 64)
 
 
-all_sprites_list.add(Asteroid)
+all_sprites_list.add(one)
 all_sprites_list.add(player)
 #all_sprites_list.add(enemy)
 
 while True:
+    checkKill(listAsteroid)
     if creationTime==0:
-        x=Asteroid
+        x=Asteroid(window_width-1, random.randint(20,window_height-10), 20, 20)
         listAsteroid.append(x)
         all_sprites_list.add(x)
-        print(listAsteroid)
-        print(len(all_sprites_list))
+        checkAsteroid(listAsteroid)
+
         creationTime=100
     # Event processing here
     for event in pygame.event.get():
@@ -178,7 +172,7 @@ while True:
     for ent in all_sprites_list:
         ent.update()
 
-    screen.fill(background)
+    screen.blit(stars,(0,0))
 
     all_sprites_list.draw(screen)
     creationTime-=1
