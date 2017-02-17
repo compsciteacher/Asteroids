@@ -1,16 +1,21 @@
 import pygame
+
 import sys
 import random
 stars=pygame.image.load("bg.png")
-background = (0, 0, 0)
 entity_color = (255, 255, 255,255)
 listAsteroid=[]
 listLaser=[]
-creationTime=100
+leveltime=50
+creationTime=leveltime
 all_sprites_list = pygame.sprite.Group()
 lives=3
-dead=False
+score=0
 
+
+#----------------------------------------------
+#CLASSES
+#----------------------------------------------
 class Entity(pygame.sprite.Sprite):
     """Inherited by any object in the game."""
 
@@ -56,8 +61,13 @@ class Player(Ship):
 
     def MoveKeyDown(self, key):
         """Responds to a key-down event and moves accordingly"""
-        if (key == pygame.K_UP):
+        if (key == pygame.K_SPACE):
+            x = Laser(player.rect.x + 20, player.rect.y + 18, 5, 2)
+            all_sprites_list.add(x)
+            listLaser.append(x)
+        elif (key == pygame.K_UP):
             self.y_change += -self.y_dist
+
         elif (key == pygame.K_DOWN):
             self.y_change += self.y_dist
 
@@ -110,25 +120,68 @@ class Asteroid(Entity):
         # elif self.rect.y > window_height - 20:
         #     self.y_direction *= -1
 
-def checkAsteroid(all):
-    for i in all:
+class Laser(Entity):
+    """
+    The Asteroid!  Moves around the screen.
+    """
+
+    def __init__(self,x, y, width, height):
+        super(Laser, self).__init__(x, y, width, height)
+
+
+        self.image = pygame.Surface([5, 2])
+        self.image.fill(entity_color)
+
+        self.x_direction = 5
+        # Positive = down, negative = up
+        # self.y_direction = 1
+        # # Current speed.
+        self.speed = 5
+
+    def update(self):
+        # Move the Asteroid!
+        #self.rect.move_ip(self.speed * self.x_direction)
+        self.rect.x+=5
+        # Keep the Asteroid in bounds, and make it bounce off the sides.
+        # if self.rect.y < 0:
+        #     self.y_direction *= -1
+        # elif self.rect.y > window_height - 20:
+        #     self.y_direction *= -1
+
+#----------------------------------------------
+#FUNCTIONS
+#----------------------------------------------
+
+def checkScreen(asteroids,lasers):
+    for i in asteroids:
         if i.rect.x<=0:
             i.remove(all_sprites_list)
-            all.remove(i)
+            asteroids.remove(i)
+    for i in lasers:
+        if i.rect.x>=700:
+            i.remove(all_sprites_list)
+            lasers.remove(i)
 
 def checkKill(all):
     global lives
     for i in all:
         if i.rect.colliderect(player.rect):
             all.remove(i)
+            i.remove(all_sprites_list)
             killed=True
             print('dead')
             lives-=1
             print(lives)
+def laserHit(asteroids,lasers):
+    for i in asteroids:
+        for x in listLaser:
+            if i.rect.colliderect(x):
+                i.remove(all_sprites_list)
+                x.remove(all_sprites_list)
+                asteroids.remove(i)
+                lasers.remove(x)
 
-
-
-
+#-----------------------------------------------------------
 
 pygame.init()
 
@@ -140,25 +193,29 @@ pygame.display.set_caption("Asteroids")
 
 clock = pygame.time.Clock()
 
-one = Asteroid(window_width, random.randint(10,window_height-10), 20, 20)
-listAsteroid.append(one)
+First = Asteroid(window_width, random.randint(10,window_height-10), 20, 20)
+listAsteroid.append(First)
 player = Player(20, window_height / 2, 40, 37)
-#y = Enemy(window_width - 40, window_height / 2, 64, 64)
 
-
-all_sprites_list.add(one)
+all_sprites_list.add(First)
 all_sprites_list.add(player)
-#all_sprites_list.add(enemy)
+
+fontObj = pygame.font.Font('freesansbold.ttf', 26)
+textSurfaceObj = fontObj.render(str(lives), True,(255,255,255))
+textRectObj=textSurfaceObj.get_rect()
 
 while True:
-    checkKill(listAsteroid)
-    if creationTime==0:
-        x=Asteroid(window_width-1, random.randint(20,window_height-10), 20, 20)
+    screen.blit(textSurfaceObj,textRectObj)
+    laserHit(listAsteroid,listLaser) #Check if laser hits asteroid
+    checkKill(listAsteroid) #Check if player hit by asteroid
+    checkScreen(listAsteroid,listLaser) #Check if anything off screen
+    if creationTime<=0:#This creates asteroids after set amount of time
+        x=Asteroid(window_width-1, random.randint(0,window_height-20), 20, 20)
         listAsteroid.append(x)
         all_sprites_list.add(x)
-        checkAsteroid(listAsteroid)
-
-        creationTime=100
+        leveltime-=1 #each time an asteroid is formed we make it shorter until next is made
+        creationTime=leveltime
+        print(len(listAsteroid))
     # Event processing here
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
