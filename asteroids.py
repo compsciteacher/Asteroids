@@ -168,7 +168,7 @@ def checkKill(all):
         if i.rect.colliderect(player.rect):
             all.remove(i)
             i.remove(all_sprites_list)
-            killed=True
+
             print('dead')
             lives-=1
             print(lives)
@@ -210,12 +210,15 @@ while True:
     checkKill(listAsteroid) #Check if player hit by asteroid
     checkScreen(listAsteroid,listLaser) #Check if anything off screen
     if creationTime<=0:#This creates asteroids after set amount of time
-        x=Asteroid(window_width-1, random.randint(0,window_height-20), 20, 20)
-        listAsteroid.append(x)
-        all_sprites_list.add(x)
-        leveltime-=1 #each time an asteroid is formed we make it shorter until next is made
-        creationTime=leveltime
-        print(len(listAsteroid))
+        if (len(listAsteroid))>12:
+            pass
+        else:
+            x=Asteroid(window_width-1, random.randint(0,window_height-20), 20, 20)
+            listAsteroid.append(x)
+            all_sprites_list.add(x)
+            leveltime-=.25 #each time an asteroid is formed we make it shorter until next is made
+            creationTime=leveltime
+            print(len(listAsteroid))
     # Event processing here
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
